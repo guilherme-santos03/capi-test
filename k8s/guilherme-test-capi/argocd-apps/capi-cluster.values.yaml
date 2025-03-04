@@ -1,0 +1,85 @@
+global:
+  clusterName: guilherme-test-capi
+  kubernetes:
+    version: v1.32.0
+  kubeaid:
+    repo: https://github.com/Obmondo/KubeAid
+  kubeaidConfig:
+    repo: https://github.com/guilherme-santos03/capi-test
+  additionalUsers: 
+    []
+provider:
+  aws: true
+
+aws:
+  # Currently, hostNetworking must be set to true.
+  # Otherwise, during the Kubernetes version upgrade process, when the control-plane nodes get
+  # restarted, AWS CAPA errors out, complaining that :
+  #
+  #     NoCredentialProviders: no valid providers in chain. Deprecated.
+  useHostNetwork: true
+  secretName: cloud-credentials
+  sshKeyName: tech-lift-roi-sre
+  region: eu-west-1
+  bastion:
+    enabled: true
+  vpc:
+    cidrBlock: 10.14.0.0/22
+  pods:
+    cidrBlock: 10.244.0.0/16
+  controlPlane:
+    loadBalancer:
+      loadBalancerType: nlb
+    region: eu-west-1
+    replicas: 1
+    instanceType: t4g.medium
+    ami:
+      id: ami-0f4b7614aa235bc9d
+    apiServer:
+      extraArgs: 
+        audit-log-maxage: "10"
+        audit-log-maxbackup: "1"
+        audit-log-maxsize: "100"
+        audit-log-path: /var/log/kube-apiserver-audit.logs
+        audit-policy-file: /srv/kubernetes/audit.yaml
+      extraVolumes: 
+        - name: audit-policy-file
+          hostPath: /srv/kubernetes/audit.yaml
+          mountPath: /srv/kubernetes/audit.yaml
+          pathType: FileOrCreate
+          readOnly: true
+        - name: log-backend
+          hostPath: /var/log/kube-apiserver-audit.logs
+          mountPath: /var/log/kube-apiserver-audit.logs
+          pathType: FileOrCreate
+      files: 
+        - path: /srv/kubernetes/audit.yaml
+          content: |
+            apiVersion: audit.k8s.io/v1
+            kind: Policy
+            # Don't generate audit events for all requests in the RequestReceived stage.
+            omitStages:
+              - "RequestReceived"
+            rules:
+              # Log events with metadata (requesting user, timestamp, resource, verb, etc.) but not request or
+              # response body.
+              - level: Metadata
+                # Long-running requests like watches that fall under this rule will not generate an audit event
+                # in RequestReceived stage. We will omit those logs.
+                omitStages:
+                  - "RequestReceived"
+  nodeGroups: 
+    - name: primary
+      minSize: 1
+      maxSize: 3
+      cpu: 2
+      memory: 4096
+      labels:
+        node-role.kubernetes.io/bootstrapper: ""
+        node.cluster.x-k8s.io/nodegroup: primary
+      taints: []
+      instanceType: t4g.medium
+      sshKeyName: tech-lift-roi-sre
+      ami:
+        id: ami-0f4b7614aa235bc9d
+      rootVolumeSize: 35
