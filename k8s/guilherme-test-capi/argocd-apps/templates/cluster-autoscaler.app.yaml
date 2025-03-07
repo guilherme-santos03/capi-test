@@ -1,9 +1,12 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
+  labels:
+    kubeaid.io/version: "10.0.1"
+    kubeaid.io/managed-by: "kubeaid"
+    kubeaid.io/priority: "default"
   name: cluster-autoscaler
   namespace: argo-cd
-
 spec:
   destination:
     namespace: cluster-autoscaler
@@ -11,14 +14,14 @@ spec:
   sources:
     - repoURL: https://github.com/Obmondo/KubeAid
       path: argocd-helm-charts/cluster-autoscaler
-      targetRevision: HEAD
+      targetRevision: 10.0.1
       helm:
         valueFiles:
           - $values/k8s/guilherme-test-capi/argocd-apps/cluster-autoscaler.values.yaml
     - repoURL: https://github.com/guilherme-santos03/capi-test
       targetRevision: HEAD
       ref: values
-  project: default
+  project: kubeaid
   syncPolicy:
     syncOptions:
       - CreateNamespace=true
