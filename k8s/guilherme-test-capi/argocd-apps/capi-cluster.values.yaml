@@ -22,9 +22,10 @@ aws:
   sshKeyName: tech-lift-roi-sre
   region: eu-west-1
   bastion:
-    enabled: true
+    enabled: false
   vpc:
-    cidrBlock: 10.14.0.0/22
+    id: vpc-0135224f2a1f9d20d
+    cidrBlock: 10.61.248.0/21
   pods:
     cidrBlock: 10.244.0.0/16
   controlPlane:
