@@ -30,6 +30,7 @@ aws:
   controlPlane:
     loadBalancer:
       loadBalancerType: nlb
+      scheme: internal
     region: eu-west-1
     replicas: 1
     instanceType: t4g.medium
